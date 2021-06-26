@@ -1,0 +1,49 @@
+version: '3.6'
+services:
+  telegraf:
+    image: telegraf:${TELEGRAF_V}
+    container_name: telegraf
+    env_file: 
+      - .env
+    volumes:
+    - ./telegraf/etc/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+      - influxdb
+    links:
+      - influxdb
+    ports:
+    - '8125:8125'
+
+  influxdb:
+    image: influxdb:${INFLUXDB_V}
+    container_name: influxdb
+    env_file: 
+      - .env
+    ports:
+      - '8086:8086'
+    volumes:
+      - ./:/imports
+      - ./influxdb_data:/var/lib/influxdb
+      - ./influxdb/conf/:/etc/influxdb/
+    environment:
+      - INFLUXDB_DB=jmeter
+
+  grafana:
+    image: grafana/grafana:${GRAFANA_V}
+    container_name: grafana
+    depends_on:
+      - influxdb
+    env_file: 
+      - .env
+    links:
+      - influxdb
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+
+volumes:
+  grafana_data: {}
+  influxdb_data: {}
